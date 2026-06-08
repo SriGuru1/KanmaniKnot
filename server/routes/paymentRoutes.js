@@ -1,0 +1,9 @@
+const router = require('express').Router();
+const ctrl = require('../controllers/paymentController');
+const { protect } = require('../middleware/authMiddleware');
+
+router.post('/create-order', protect, ctrl.createOrder);
+router.post('/verify', protect, ctrl.verifyPayment);
+router.post('/webhook', ctrl.webhook); // Raw body needed — Razorpay signs raw JSON
+
+module.exports = router;
