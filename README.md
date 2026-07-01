@@ -306,6 +306,200 @@ All requests must be prefixed with `/api`. Protected routes require a valid `Bea
 *   `PUT /tenant/profile` — update boutique branding color codes, currency settings, etc. *(Protected, Tenant Admin)*
 *   `GET /analytics/dashboard` — query tenant sales metrics, category breakdowns, and low stock warnings. *(Protected, Tenant Admin)*
 
+### 📋 Detailed Request/Response Payloads
+
+Below are concrete JSON representations for testing core MERN endpoints via tools like Postman or cURL.
+
+#### 1. Tenant & Admin Registration (`POST /api/auth/register`)
+*   **Request Headers:** `Content-Type: application/json`
+*   **Request Body:**
+    ```json
+    {
+      "name": "Sri Guru Admin",
+      "email": "demo@kanmaniknot.com",
+      "password": "demo1234password",
+      "tenantName": "Sri Guru Kanmani Knots",
+      "plan": "pro"
+    }
+    ```
+*   **Response (201 Created):**
+    *   *Headers:* `Set-Cookie: refreshToken=...; HttpOnly; SameSite=Strict; Path=/api/auth; Max-Age=604800`
+    *   *Body:*
+        ```json
+        {
+          "message": "Registration successful",
+          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "user": {
+            "_id": "64d0a1b2c3d4e5f678901234",
+            "name": "Sri Guru Admin",
+            "email": "demo@kanmaniknot.com",
+            "role": "tenant_admin",
+            "tenantId": "64d0a1b2c3d4e5f678905678"
+          },
+          "tenant": {
+            "_id": "64d0a1b2c3d4e5f678905678",
+            "name": "Sri Guru Kanmani Knots",
+            "subdomain": "sri-guru-kanmani-knots",
+            "plan": "pro",
+            "status": "active"
+          }
+        }
+        ```
+
+#### 2. Create Product with Custom Variants (`POST /api/products`)
+*   **Request Headers:** `Authorization: Bearer <accessToken>`, `Content-Type: application/json`
+*   **Request Body:**
+    ```json
+    {
+      "name": "Valkalam Kanchipuram Silk",
+      "description": "Pure mulberry silk with custom zari brocade and traditional borders.",
+      "category": "64d0a1b2c3d4e5f678909876",
+      "basePrice": 15500,
+      "variants": [
+        {
+          "sku": "KNC-SILK-GLD-01",
+          "tasselType": "Royal Kuchu Knot (Gold Zari)",
+          "colour": "Crimson Red & Gold",
+          "weavePattern": "Traditional Butta",
+          "zariWeight": "250g Pure Gold Zari",
+          "length": 6.2,
+          "price": 15500,
+          "stock": 5
+        }
+      ],
+      "tags": ["bridal", "silk", "kanchipuram"]
+    }
+    ```
+*   **Response (201 Created):**
+    ```json
+    {
+      "product": {
+        "_id": "64d0a1b2c3d4e5f67890abcd",
+        "tenantId": "64d0a1b2c3d4e5f678905678",
+        "name": "Valkalam Kanchipuram Silk",
+        "description": "Pure mulberry silk with custom zari brocade and traditional borders.",
+        "category": "64d0a1b2c3d4e5f678909876",
+        "basePrice": 15500,
+        "images": [],
+        "variants": [
+          {
+            "sku": "KNC-SILK-GLD-01",
+            "tasselType": "Royal Kuchu Knot (Gold Zari)",
+            "colour": "Crimson Red & Gold",
+            "weavePattern": "Traditional Butta",
+            "zariWeight": "250g Pure Gold Zari",
+            "length": 6.2,
+            "price": 15500,
+            "stock": 5
+          }
+        ],
+        "ratings": {
+          "avg": 0,
+          "count": 0
+        },
+        "isActive": true,
+        "tags": ["bridal", "silk", "kanchipuram"],
+        "createdAt": "2026-07-01T03:30:00.000Z",
+        "updatedAt": "2026-07-01T03:30:00.000Z"
+      }
+    }
+    ```
+
+#### 3. Place Order (`POST /api/orders`)
+*   **Request Headers:** `Authorization: Bearer <accessToken>`, `Content-Type: application/json`
+*   **Request Body:**
+    ```json
+    {
+      "items": [
+        {
+          "productId": "64d0a1b2c3d4e5f67890abcd",
+          "variantSku": "KNC-SILK-GLD-01",
+          "qty": 2,
+          "price": 15500,
+          "name": "Valkalam Kanchipuram Silk"
+        }
+      ],
+      "totalAmount": 31000,
+      "shippingAddress": {
+        "line1": "No. 45 Palace Road",
+        "line2": "Vasanth Nagar",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "pincode": "560001",
+        "phone": "+91 98765 43210"
+      }
+    }
+    ```
+*   **Response (201 Created):**
+    ```json
+    {
+      "order": {
+        "_id": "64d0a1b2c3d4e5f67890eeee",
+        "tenantId": "64d0a1b2c3d4e5f678905678",
+        "customerId": "64d0a1b2c3d4e5f678903333",
+        "items": [
+          {
+            "productId": "64d0a1b2c3d4e5f67890abcd",
+            "variantSku": "KNC-SILK-GLD-01",
+            "qty": 2,
+            "price": 15500,
+            "name": "Valkalam Kanchipuram Silk"
+          }
+        ],
+        "totalAmount": 31000,
+        "status": "PENDING",
+        "paymentInfo": {
+          "status": "pending"
+        },
+        "shippingAddress": {
+          "line1": "No. 45 Palace Road",
+          "line2": "Vasanth Nagar",
+          "city": "Bengaluru",
+          "state": "Karnataka",
+          "pincode": "560001",
+          "phone": "+91 98765 43210"
+        },
+        "timeline": [
+          {
+            "status": "PENDING",
+            "note": "Order initialized",
+            "timestamp": "2026-07-01T03:35:00.000Z"
+          }
+        ],
+        "createdAt": "2026-07-01T03:35:00.000Z",
+        "updatedAt": "2026-07-01T03:35:00.000Z"
+      }
+    }
+    ```
+
+#### 4. Confirm Payment (`POST /api/payments/verify`)
+*   **Request Headers:** `Authorization: Bearer <accessToken>`, `Content-Type: application/json`
+*   **Request Body:**
+    ```json
+    {
+      "razorpayOrderId": "rzp_mock_64d0a1b2c3d4e5f67890eeee",
+      "razorpayPaymentId": "pay_mock_64d0a1b2c3d4e5f67890eeee",
+      "signature": "mock_signature_signature_hash...",
+      "orderId": "64d0a1b2c3d4e5f67890eeee"
+    }
+    ```
+*   **Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "order": {
+        "_id": "64d0a1b2c3d4e5f67890eeee",
+        "status": "CONFIRMED",
+        "paymentInfo": {
+          "razorpayOrderId": "rzp_mock_64d0a1b2c3d4e5f67890eeee",
+          "razorpayPaymentId": "pay_mock_64d0a1b2c3d4e5f67890eeee",
+          "status": "paid",
+          "paidAt": "2026-07-01T03:36:00.000Z"
+        }
+      }
+    }
+    ```
+
 ---
 
 ## 🏗️ Architectural & Engineering Patterns
