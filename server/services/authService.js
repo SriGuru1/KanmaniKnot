@@ -55,7 +55,7 @@ const register = async ({ name, email, password, tenantName, plan }) => {
 };
 
 const login = async ({ email, password, tenantId }) => {
-  const query = tenantId ? { email, tenantId } : { email, role: 'platform_admin' };
+  const query = tenantId ? { email, tenantId } : { email };
   const user = await User.findOne(query).select('+passwordHash');
   if (!user) throw Object.assign(new Error('Invalid credentials'), { status: 401 });
 

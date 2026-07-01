@@ -1,11 +1,13 @@
 const nodemailer = require('nodemailer');
 
-const transporter = nodemailer.createTransport({
+const hasMailConfig = process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS;
+
+const transporter = hasMailConfig ? nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: Number(process.env.EMAIL_PORT) || 587,
   secure: false,
   auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-});
+}) : null;
 
 const templates = {
   welcome: ({ name, tenantName }) => ({
@@ -40,11 +42,21 @@ const templates = {
 const sendEmail = async ({ to, subject, template, data }) => {
   const tpl = templates[template]?.(data);
   const mailOptions = {
-    from: process.env.EMAIL_FROM,
+    from: process.env.EMAIL_FROM || 'Saree Tassels <noreply@sareetassels.in>',
     to,
     subject: tpl?.subject || subject,
     html: tpl?.html || '',
   };
+
+  if (!transporter) {
+    console.log('\n==================================================');
+    console.log(`[DEMO EMAIL SENT] To: ${to}`);
+    console.log(`Subject: ${mailOptions.subject}`);
+    console.log(`Content HTML:\n${mailOptions.html}`);
+    console.log('==================================================\n');
+    return { messageId: 'demo_mock_id_' + Date.now() };
+  }
+
   return transporter.sendMail(mailOptions);
 };
 

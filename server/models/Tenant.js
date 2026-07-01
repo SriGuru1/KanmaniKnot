@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 
-const PLANS = ['basic', 'pro', 'enterprise'];
+const PLANS = ['trial', 'basic', 'pro', 'enterprise'];
 const STATUS = ['trial', 'active', 'suspended', 'cancelled'];
 
 const planFeaturesMap = {
+  trial:      { maxProducts: 100,  maxStaff: 2,  analyticsAccess: true  },
   basic:      { maxProducts: 100,  maxStaff: 2,  analyticsAccess: false },
   pro:        { maxProducts: 1000, maxStaff: 10, analyticsAccess: true  },
   enterprise: { maxProducts: Infinity, maxStaff: Infinity, analyticsAccess: true },
@@ -12,7 +13,7 @@ const planFeaturesMap = {
 const tenantSchema = new mongoose.Schema({
   name:       { type: String, required: true, trim: true },
   subdomain:  { type: String, required: true, unique: true, lowercase: true, trim: true },
-  ownerId:    { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  ownerId:    { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   plan:       { type: String, enum: PLANS, default: 'trial' },
   status:     { type: String, enum: STATUS, default: 'trial' },
   logoUrl:    { type: String },

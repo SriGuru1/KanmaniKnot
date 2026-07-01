@@ -1,16 +1,32 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
-const app = require('../server/server');
+const { MongoMemoryServer } = require('mongodb-memory-server');
 
-// Use a test DB
+let mongoServer;
+let app;
+
 beforeAll(async () => {
-  const uri = process.env.MONGO_URI_TEST || 'mongodb://localhost:27017/saree-tassels-test';
-  await mongoose.connect(uri);
+  mongoServer = await MongoMemoryServer.create();
+  process.env.MONGO_URI = mongoServer.getUri();
+  
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
+  await mongoose.connect(process.env.MONGO_URI);
+  
+  // Require app only after setting MONGO_URI
+  app = require('../server/server');
 });
 
 afterAll(async () => {
-  await mongoose.connection.dropDatabase();
-  await mongoose.connection.close();
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.connection.dropDatabase();
+    await mongoose.connection.close();
+  }
+  if (mongoServer) {
+    await mongoServer.stop();
+  }
+  delete process.env.MONGO_URI;
 });
 
 describe('POST /api/auth/register', () => {

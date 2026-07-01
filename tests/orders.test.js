@@ -1,13 +1,23 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
-const app = require('../server/server');
+const { MongoMemoryServer } = require('mongodb-memory-server');
 
 let accessToken;
 let tenantId;
+let mongoServer;
+let app;
 
 beforeAll(async () => {
-  const uri = process.env.MONGO_URI_TEST || 'mongodb://localhost:27017/saree-tassels-test';
-  if (mongoose.connection.readyState === 0) await mongoose.connect(uri);
+  mongoServer = await MongoMemoryServer.create();
+  process.env.MONGO_URI = mongoServer.getUri();
+  
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
+  await mongoose.connect(process.env.MONGO_URI);
+  
+  // Require app only after setting MONGO_URI
+  app = require('../server/server');
 
   // Register and login
   await request(app).post('/api/auth/register').send({
@@ -24,8 +34,14 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await mongoose.connection.dropDatabase();
-  await mongoose.connection.close();
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.connection.dropDatabase();
+    await mongoose.connection.close();
+  }
+  if (mongoServer) {
+    await mongoServer.stop();
+  }
+  delete process.env.MONGO_URI;
 });
 
 describe('Order state machine', () => {

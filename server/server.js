@@ -16,8 +16,26 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
-// ── Connect DB ────────────────────────────────────────────
-connectDB();
+// ── Connect DB & Auto-Seed ────────────────────────────────
+connectDB().then(async () => {
+  if (process.env.NODE_ENV === 'test') {
+    return; // Don't auto-seed in test environment to avoid connection conflict
+  }
+  
+  try {
+    const Tenant = require('./models/Tenant');
+    const count = await Tenant.countDocuments();
+    if (count === 0) {
+      console.log('No tenants found in database. Initializing automatic seed...');
+      const { seedData } = require('./seed');
+      await seedData();
+    } else {
+      console.log(`Database already has ${count} tenant(s). Skipping seed.`);
+    }
+  } catch (err) {
+    console.error('Error during database auto-seed check:', err.message);
+  }
+});
 
 // ── Global Middleware ─────────────────────────────────────
 app.use(cors({
@@ -50,7 +68,9 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date() }))
 // ── Centralised Error Handler ─────────────────────────────
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT} [${process.env.NODE_ENV}]`));
+if (process.env.NODE_ENV !== 'test') {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => console.log(`Server running on port ${PORT} [${process.env.NODE_ENV}]`));
+}
 
 module.exports = app; // for supertest

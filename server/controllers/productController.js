@@ -1,15 +1,26 @@
 const productService = require('../services/productService');
+const Tenant = require('../models/Tenant');
 
 exports.listProducts = async (req, res, next) => {
   try {
-    const result = await productService.listProducts({ tenantId: req.user.tenantId || req.query.tenantId, ...req.query });
+    let tenantId = req.user?.tenantId || req.query.tenantId;
+    if (!tenantId) {
+      const defaultTenant = await Tenant.findOne();
+      if (defaultTenant) tenantId = defaultTenant._id;
+    }
+    const result = await productService.listProducts({ tenantId, ...req.query });
     res.json(result);
   } catch (err) { next(err); }
 };
 
 exports.getProduct = async (req, res, next) => {
   try {
-    const product = await productService.getProduct(req.params.id, req.user?.tenantId || req.query.tenantId);
+    let tenantId = req.user?.tenantId || req.query.tenantId;
+    if (!tenantId) {
+      const defaultTenant = await Tenant.findOne();
+      if (defaultTenant) tenantId = defaultTenant._id;
+    }
+    const product = await productService.getProduct(req.params.id, tenantId);
     res.json({ product });
   } catch (err) { next(err); }
 };
